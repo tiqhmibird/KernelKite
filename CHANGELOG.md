@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject `--interval-ms 0`, which sampled in a busy loop instead of failing.
+- Report a mistyped global flag as an unknown flag rather than an unknown command.
+
+
 Nothing yet.
 
 ## [0.1.0] — 2026-08-31
