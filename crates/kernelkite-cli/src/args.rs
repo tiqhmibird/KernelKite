@@ -139,8 +139,20 @@ fn parse_num<T: std::str::FromStr>(v: Option<String>, flag: &str) -> Result<T, S
 
 fn parse_command(sub: &str, rest: Vec<String>) -> Result<Command, String> {
     match sub {
-        "help" => Ok(Command::Help),
-        "version" => Ok(Command::Version),
+        "help" => {
+            if rest.is_empty() {
+                Ok(Command::Help)
+            } else {
+                Err(format!("help takes no arguments, got {:?}", rest[0]))
+            }
+        }
+        "version" => {
+            if rest.is_empty() {
+                Ok(Command::Version)
+            } else {
+                Err(format!("version takes no arguments, got {:?}", rest[0]))
+            }
+        }
         "run" => {
             // Layout: <bundle.json> -- <cmd> [args...]
             let mut parts = rest.into_iter();
@@ -200,5 +212,19 @@ fn parse_command(sub: &str, rest: Vec<String>) -> Result<Command, String> {
             Ok(Command::Viewer { bundle, out })
         }
         other => Err(format!("unknown command `{other}`")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_and_version_reject_trailing_arguments() {
+        let err = Cli::parse(["version", "extra"].map(String::from)).unwrap_err();
+        assert!(err.contains("takes no arguments"), "{err}");
+        let err = Cli::parse(["help", "--json"].map(String::from)).unwrap_err();
+        assert!(err.contains("takes no arguments"), "{err}");
+        assert!(Cli::parse(["version"].map(String::from)).is_ok());
     }
 }
