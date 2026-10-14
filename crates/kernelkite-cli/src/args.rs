@@ -138,6 +138,13 @@ fn parse_num<T: std::str::FromStr>(v: Option<String>, flag: &str) -> Result<T, S
 }
 
 fn parse_command(sub: &str, rest: Vec<String>) -> Result<Command, String> {
+    if let Some(first) = rest.first() {
+        if first.starts_with('-') && first != "--" {
+            return Err(format!(
+                "unexpected flag {first:?} after the subcommand; global flags go before it"
+            ));
+        }
+    }
     match sub {
         "help" => Ok(Command::Help),
         "version" => Ok(Command::Version),
@@ -200,5 +207,20 @@ fn parse_command(sub: &str, rest: Vec<String>) -> Result<Command, String> {
             Ok(Command::Viewer { bundle, out })
         }
         other => Err(format!("unknown command `{other}`")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_flag_after_the_subcommand_is_rejected() {
+        let err = Cli::parse(["summary", "--json", "out.json"].map(String::from)).unwrap_err();
+        assert!(err.contains("unexpected flag"), "{err}");
+        let err =
+            Cli::parse(["run", "--json", "out.json", "--", "true"].map(String::from)).unwrap_err();
+        assert!(err.contains("unexpected flag"), "{err}");
+        assert!(Cli::parse(["--json", "summary", "out.json"].map(String::from)).is_ok());
     }
 }
