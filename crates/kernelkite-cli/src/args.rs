@@ -98,6 +98,11 @@ impl Cli {
                 "-V" | "--version" => {
                     return Ok(Cli::simple(Command::Version));
                 }
+                other if other.starts_with('-') && other != "-" => {
+                    return Err(format!(
+                        "unknown flag {other:?}; global flags go before the subcommand"
+                    ));
+                }
                 _ => {
                     subcommand = it.next();
                     break;
@@ -222,5 +227,13 @@ mod tests {
             "{err}"
         );
         assert!(Cli::parse(["--interval-ms", "1", "version"].map(String::from)).is_ok());
+    }
+
+    #[test]
+    fn a_mistyped_global_flag_is_reported_as_a_flag() {
+        let err = Cli::parse(["--netwrok", "version"].map(String::from)).unwrap_err();
+        assert!(err.contains("unknown flag"), "{err}");
+        assert!(err.contains("--netwrok"), "{err}");
+        assert!(Cli::parse(["version"].map(String::from)).is_ok());
     }
 }
