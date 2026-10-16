@@ -121,6 +121,13 @@ impl Cli {
             );
         }
 
+        if max_frames == 0 {
+            return Err(
+                "--max-frames must be greater than zero; an empty bundle carries no frames"
+                    .to_string(),
+            );
+        }
+
         Ok(Cli {
             interval_ms,
             max_frames,
@@ -235,5 +242,15 @@ mod tests {
         assert!(err.contains("unknown flag"), "{err}");
         assert!(err.contains("--netwrok"), "{err}");
         assert!(Cli::parse(["version"].map(String::from)).is_ok());
+    }
+
+    #[test]
+    fn a_zero_frame_budget_is_rejected() {
+        let err = Cli::parse(["--max-frames", "0", "version"].map(String::from)).unwrap_err();
+        assert!(
+            err.contains("--max-frames must be greater than zero"),
+            "{err}"
+        );
+        assert!(Cli::parse(["--max-frames", "1", "version"].map(String::from)).is_ok());
     }
 }
